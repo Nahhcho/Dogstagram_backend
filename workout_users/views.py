@@ -139,6 +139,7 @@ def new_post(request):
         image = image.resize((256, 256))
         # Convert the image to a NumPy array and normalize
         image_array = np.array(image) / 255.0
+        image.close()
         # Expand dimensions to match the input shape expected by the model
         image_array = np.expand_dims(image_array, axis=0)
 
