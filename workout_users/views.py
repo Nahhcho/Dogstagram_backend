@@ -1,7 +1,6 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from botocore.exceptions import NoCredentialsError
-from django.conf import settings
+from io import BytesIO
 import json
 import tensorflow as tf
 from PIL import Image
@@ -134,17 +133,18 @@ def new_post(request):
         model = tf.keras.models.load_model('models')
 
         # Open the image file
-        image = Image.open(img)
-        # Resize the image if necessary
+        image_stream = BytesIO(img.read())
+        image = Image.open(image_stream)
+        # Resize the image while streaming
         image = image.resize((256, 256))
+
         # Convert the image to a NumPy array and normalize
         image_array = np.array(image) / 255.0
-        image.close()
+        image_stream.close()
         # Expand dimensions to match the input shape expected by the model
         image_array = np.expand_dims(image_array, axis=0)
 
         prediction = model.predict(image_array)
-        print(prediction)
 
         if prediction < .5:
             poster = User.objects.get(username=request.data.get('poster'))
