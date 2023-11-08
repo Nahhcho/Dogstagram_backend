@@ -146,6 +146,8 @@ def new_post(request):
         image_array = np.expand_dims(image_array, axis=0)
 
         prediction = model.predict(image_array)
+        percentage = round(1 - prediction[0][0], 2)
+        print(prediction)
 
         if prediction < .5:
             poster = User.objects.get(username=request.data.get('poster'))
@@ -153,9 +155,9 @@ def new_post(request):
             post = Post(caption=caption, img=img, poster=poster)
             post.save()
             poster.posts.add(post)
-            return JsonResponse({'message': 'post created!'}, status=201)
+            return JsonResponse({'message': 'post created!', 'prediction': f"{percentage*100}%"}, status=201)
         else:
-            return JsonResponse({'message': 'thats not a dawg!'}, status=201)
+            return JsonResponse({'message': "That's not a dog!", 'prediction': f"{percentage*100}%"}, status=201)
                   
 
 @api_view(['GET', 'POST'])
