@@ -125,12 +125,13 @@ def comment(request, id):
         return JsonResponse({'message': 'comment deleted'}, status=201)
 
 
-model = tf.keras.models.load_model('models')
+
 @api_view(['POST'])
 def new_post(request):
     if request.method == 'POST':
         caption = request.data.get('caption')
         img = request.FILES['img']
+        model = tf.keras.models.load_model('models')
 
         # Open the image file
         image = Image.open(img)
