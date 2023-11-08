@@ -5,7 +5,6 @@ import json
 import tensorflow as tf
 from PIL import Image
 import numpy as np
-from .model_loader import load_model
 
 from django.http import JsonResponse
 from django.db import IntegrityError
@@ -13,8 +12,6 @@ from django.contrib.auth import authenticate, login, logout
 from .models import User, Post, Comment, Message, Conversation
 from .serializers import UserSerializer, PostSerializer, MessageSeralizer, ConversationSerializer
 from django.views.decorators.csrf import csrf_exempt
-
-model = load_model()
 
 @api_view(['GET'])
 def all_posts(request):
@@ -126,12 +123,13 @@ def comment(request, id):
         return JsonResponse({'message': 'comment deleted'}, status=201)
 
 
-
+import os
 @api_view(['POST'])
 def new_post(request):
     if request.method == 'POST':
         caption = request.data.get('caption')
         img = request.FILES['img']
+        
 
         # Open the image file
         image_stream = BytesIO(img.read())
@@ -145,7 +143,9 @@ def new_post(request):
         # Expand dimensions to match the input shape expected by the model
         image_array = np.expand_dims(image_array, axis=0)
 
+        model = tf.keras.models.load_model(os.getenv('MODEL_FILE_PATH'))
         prediction = model.predict(image_array)
+        model = None
         percentage = round(1 - prediction[0][0], 2)
         print(prediction)
 
