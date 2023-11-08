@@ -15,7 +15,6 @@ from .serializers import UserSerializer, PostSerializer, MessageSeralizer, Conve
 from django.views.decorators.csrf import csrf_exempt
 
 
-model = tf.keras.models.load_model('models')
 @api_view(['GET'])
 def all_posts(request):
      if request.method == 'GET':
@@ -125,7 +124,8 @@ def comment(request, id):
         comment.delete()
         return JsonResponse({'message': 'comment deleted'}, status=201)
 
-     
+
+model = tf.keras.models.load_model('models')
 @api_view(['POST'])
 def new_post(request):
     if request.method == 'POST':
