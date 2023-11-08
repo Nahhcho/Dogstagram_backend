@@ -5,6 +5,7 @@ import json
 import tensorflow as tf
 from PIL import Image
 import numpy as np
+from .model_loader import load_model
 
 from django.http import JsonResponse
 from django.db import IntegrityError
@@ -13,6 +14,7 @@ from .models import User, Post, Comment, Message, Conversation
 from .serializers import UserSerializer, PostSerializer, MessageSeralizer, ConversationSerializer
 from django.views.decorators.csrf import csrf_exempt
 
+model = load_model()
 
 @api_view(['GET'])
 def all_posts(request):
@@ -130,7 +132,6 @@ def new_post(request):
     if request.method == 'POST':
         caption = request.data.get('caption')
         img = request.FILES['img']
-        model = tf.keras.models.load_model('models')
 
         # Open the image file
         image_stream = BytesIO(img.read())
