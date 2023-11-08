@@ -14,6 +14,8 @@ from .models import User, Post, Comment, Message, Conversation
 from .serializers import UserSerializer, PostSerializer, MessageSeralizer, ConversationSerializer
 from django.views.decorators.csrf import csrf_exempt
 
+
+model = tf.keras.models.load_model('models')
 @api_view(['GET'])
 def all_posts(request):
      if request.method == 'GET':
@@ -127,7 +129,6 @@ def comment(request, id):
 @api_view(['POST'])
 def new_post(request):
     if request.method == 'POST':
-        model = tf.keras.models.load_model('models')
         caption = request.data.get('caption')
         img = request.FILES['img']
 
@@ -137,6 +138,7 @@ def new_post(request):
         image = image.resize((256, 256))
         # Convert the image to a NumPy array and normalize
         image_array = np.array(image) / 255.0
+        image.close()
         # Expand dimensions to match the input shape expected by the model
         image_array = np.expand_dims(image_array, axis=0)
 
