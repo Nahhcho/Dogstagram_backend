@@ -1,10 +1,11 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-import boto3
 from botocore.exceptions import NoCredentialsError
 from django.conf import settings
 import json
 import tensorflow as tf
+from PIL import Image
+import numpy as np
 
 from django.http import JsonResponse
 from django.db import IntegrityError
@@ -126,11 +127,21 @@ def comment(request, id):
 @api_view(['POST'])
 def new_post(request):
     if request.method == 'POST':
-        model = tf.saved_model.load('saved_model.pb')
+        model = tf.keras.models.load_model('models')
         caption = request.data.get('caption')
         img = request.FILES['img']
 
-        prediction = model.predict(img)
+        # Open the image file
+        image = Image.open(img)
+        # Resize the image if necessary
+        image = image.resize((256, 256))
+        # Convert the image to a NumPy array and normalize
+        image_array = np.array(image) / 255.0
+        # Expand dimensions to match the input shape expected by the model
+        image_array = np.expand_dims(image_array, axis=0)
+
+        prediction = model.predict(image_array)
+        print(prediction)
 
         if prediction < .5:
             poster = User.objects.get(username=request.data.get('poster'))
