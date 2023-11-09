@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure--q^^em1qs8pj5g+8f#=5$o)l2ig=2g5pts3f7a+ba%#a*@1=fd'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['dogstagram-server-0ef1dc993c02.herokuapp.com', '127.0.0.1']
 
