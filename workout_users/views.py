@@ -143,7 +143,7 @@ def new_post(request):
         # Expand dimensions to match the input shape expected by the model
         image_array = np.expand_dims(image_array, axis=0)
 
-        model = tf.keras.models.load_model(os.getenv('MODEL_FILE_PATH'))
+        model = tf.keras.models.load_model('models')
         prediction = model.predict(image_array)
         model = None
         percentage = round(1 - prediction[0][0], 2)
