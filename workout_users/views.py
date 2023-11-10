@@ -12,6 +12,7 @@ from django.contrib.auth import authenticate, login, logout
 from .models import User, Post, Comment, Message, Conversation
 from .serializers import UserSerializer, PostSerializer, MessageSeralizer, ConversationSerializer
 from django.views.decorators.csrf import csrf_exempt
+import os
 
 @api_view(['GET'])
 def all_posts(request):
@@ -157,8 +158,9 @@ def new_post(request):
 
         prediction = model.predict(image_array)
 
-        percentage = round(1 - prediction[0][0], 2)
+        percentage = round(1 - prediction[0][0], 2)*100
         print(prediction)
+        os.remove(local_model_file_name)
 
         if prediction < .5:
             poster = User.objects.get(username=request.data.get('poster'))
@@ -166,9 +168,9 @@ def new_post(request):
             post = Post(caption=caption, img=img, poster=poster)
             post.save()
             poster.posts.add(post)
-            return JsonResponse({'message': 'post created!', 'prediction': f"{percentage*100}%"}, status=201)
+            return JsonResponse({'message': 'post created!', 'prediction': f"{percentage})%"}, status=201)
         else:
-            return JsonResponse({'message': "That's not a dog!", 'prediction': f"{percentage*100}%"}, status=201)
+            return JsonResponse({'message': "That's not a dog!", 'prediction': f"{percentage}%"}, status=201)
                   
 
 @api_view(['GET', 'POST'])
