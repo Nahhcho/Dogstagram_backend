@@ -123,10 +123,11 @@ def comment(request, id):
         return JsonResponse({'message': 'comment deleted'}, status=201)
 
 
-import os
+import boto3
 @api_view(['POST'])
 def new_post(request):
     if request.method == 'POST':
+        s3 = boto3.client('s3')
         caption = request.data.get('caption')
         img = request.FILES['img']
         
@@ -143,9 +144,19 @@ def new_post(request):
         # Expand dimensions to match the input shape expected by the model
         image_array = np.expand_dims(image_array, axis=0)
 
-        model = tf.keras.models.load_model('workout_users\models')
+        bucket_name = 'dogstagram-images'
+        model_file_name = 'model.h5'
+        local_model_file_name = 'local-model-file-name'  # Specify the local file name to save the downloaded model
+
+        # Download the model file from S3
+        s3.download_file(bucket_name, model_file_name, local_model_file_name)
+
+        # Load the model from the downloaded file
+        model = tf.keras.models.load_model(local_model_file_name)
+
+
         prediction = model.predict(image_array)
-        model = None
+
         percentage = round(1 - prediction[0][0], 2)
         print(prediction)
 
