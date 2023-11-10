@@ -161,7 +161,7 @@ def new_post(request):
             percentage = round(1 - prediction[0][0], 2) * 100
             print(prediction)
 
-            if prediction < 0.5:
+            if prediction < 0.75:
                 poster = User.objects.get(username=request.data.get('poster'))
                 post = Post(caption=caption, img=img, poster=poster)
                 post.save()
