@@ -29,6 +29,7 @@ def user_posts(request, users):
         
         # Fetch posts related to the selected users
         posts = Post.objects.filter(user__in=users_queryset)
+        posts = posts.order_by('-timestamp')
         serialized_posts = PostSerializer(posts, many=True)
         return JsonResponse(serialized_posts.data, safe=False)
 
@@ -128,49 +129,53 @@ import boto3
 @api_view(['POST'])
 def new_post(request):
     if request.method == 'POST':
-        s3 = boto3.client('s3')
-        caption = request.data.get('caption')
-        img = request.FILES['img']
-        
+        try:
+            s3 = boto3.client('s3')
+            caption = request.data.get('caption')
+            img = request.FILES['img']
 
-        # Open the image file
-        image_stream = BytesIO(img.read())
-        image = Image.open(image_stream)
-        # Resize the image while streaming
-        image = image.resize((256, 256))
+            # Open the image file
+            image_stream = BytesIO(img.read())
+            image = Image.open(image_stream)
+            # Resize the image while streaming
+            image = image.resize((256, 256))
 
-        # Convert the image to a NumPy array and normalize
-        image_array = np.array(image) / 255.0
-        image_stream.close()
-        # Expand dimensions to match the input shape expected by the model
-        image_array = np.expand_dims(image_array, axis=0)
+            # Convert the image to a NumPy array and normalize
+            image_array = np.array(image) / 255.0
+            image_stream.close()
+            # Expand dimensions to match the input shape expected by the model
+            image_array = np.expand_dims(image_array, axis=0)
 
-        bucket_name = 'dogstagram-images'
-        model_file_name = 'model.h5'
-        local_model_file_name = 'local-model-file-name'  # Specify the local file name to save the downloaded model
+            bucket_name = 'dogstagram-images'
+            model_file_name = 'model.h5'
+            local_model_file_name = 'local-model-file-name'  # Specify the local file name to save the downloaded model
 
-        # Download the model file from S3
-        s3.download_file(bucket_name, model_file_name, local_model_file_name)
+            # Download the model file from S3
+            s3.download_file(bucket_name, model_file_name, local_model_file_name)
 
-        # Load the model from the downloaded file
-        model = tf.keras.models.load_model(local_model_file_name)
+            # Load the model from the downloaded file
+            model = tf.keras.models.load_model(local_model_file_name)
 
+            prediction = model.predict(image_array)
 
-        prediction = model.predict(image_array)
+            percentage = round(1 - prediction[0][0], 2) * 100
+            print(prediction)
 
-        percentage = round(1 - prediction[0][0], 2)*100
-        print(prediction)
-        os.remove(local_model_file_name)
-
-        if prediction < .5:
-            poster = User.objects.get(username=request.data.get('poster'))
-            poster = User.objects.get(username=request.data.get('poster'))
-            post = Post(caption=caption, img=img, poster=poster)
-            post.save()
-            poster.posts.add(post)
-            return JsonResponse({'message': 'post created!', 'prediction': f"{percentage})%"}, status=201)
-        else:
-            return JsonResponse({'message': "That's not a dog!", 'prediction': f"{percentage}%"}, status=201)
+            if prediction < 0.5:
+                poster = User.objects.get(username=request.data.get('poster'))
+                post = Post(caption=caption, img=img, poster=poster)
+                post.save()
+                poster.posts.add(post)
+                return JsonResponse({'message': 'post created!', 'prediction': f"{percentage}%"}, status=201)
+            else:
+                return JsonResponse({'message': "That's not a dog!", 'prediction': f"{percentage}%"}, status=201)
+        except Exception as e:
+            # Handle the exception (e.g., log the error)
+            return JsonResponse({'message': 'Error creating post.', 'error': str(e)}, status=500)
+        finally:
+            # Delete the local model file, regardless of success or failure
+            if os.path.exists(local_model_file_name):
+                os.remove(local_model_file_name)
                   
 
 @api_view(['GET', 'POST'])
@@ -228,7 +233,7 @@ def register(request):
         try:
             user = User.objects.create_user(username=username, password=password)
             user.save()
-            return JsonResponse({'message': 'user created!'}, status=201)
+            return JsonResponse({'message': 'user created!', 'user': user.username}, status=201)
         except IntegrityError as e:
             print(e)
             return JsonResponse({'error': 'username already exists'})

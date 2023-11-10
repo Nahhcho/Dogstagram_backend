@@ -5,7 +5,7 @@ class User(AbstractUser):
     posts = models.ManyToManyField('Post')
     followers = models.ManyToManyField('self', related_name='follower', symmetrical=False, null=True)
     followings = models.ManyToManyField('self', related_name='following', symmetrical=False, null=True)
-    profile_pic = models.URLField(default="https://centerforgreatapes.org/wp-content/uploads/2021/03/IMG_00251_Louie.jpg")
+    profile_pic = models.URLField(default="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png")
     conversations = models.ManyToManyField('Conversation')
 
     def __str__(self):
