@@ -32,6 +32,6 @@ urlpatterns = [
     path('new_post', views.new_post),
     path('profile/<str:username>', views.profile),
     path('messages/<str:username>', views.conversations),
-    path('conversation/<int:id>', views.conversation_detail)
+    path('conversation/<int:id>', views.conversation_detail),
     
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -134,16 +134,11 @@ def new_post(request):
             caption = request.data.get('caption')
             img = request.FILES['img']
 
-            # Open the image file
             image_stream = BytesIO(img.read())
             image = Image.open(image_stream)
-            # Resize the image while streaming
             image = image.resize((256, 256))
-
-            # Convert the image to a NumPy array and normalize
             image_array = np.array(image) / 255.0
             image_stream.close()
-            # Expand dimensions to match the input shape expected by the model
             image_array = np.expand_dims(image_array, axis=0)
 
             bucket_name = 'dogstagram-images'
@@ -159,9 +154,9 @@ def new_post(request):
             prediction = model.predict(image_array)
 
             percentage = round(1 - prediction[0][0], 2) * 100
-            print(prediction)
+            print(percentage)
 
-            if prediction < 0.75:
+            if percentage < 0.75:
                 poster = User.objects.get(username=request.data.get('poster'))
                 post = Post(caption=caption, img=img, poster=poster)
                 post.save()
@@ -170,20 +165,30 @@ def new_post(request):
             else:
                 return JsonResponse({'message': "That's not a dog!", 'prediction': f"{percentage}%"}, status=201)
         except Exception as e:
-            # Handle the exception (e.g., log the error)
             return JsonResponse({'message': 'Error creating post.', 'error': str(e)}, status=500)
         finally:
-            # Delete the local model file, regardless of success or failure
             if os.path.exists(local_model_file_name):
                 os.remove(local_model_file_name)
                   
 
-@api_view(['GET', 'POST'])
+@api_view(['GET', 'POST', 'PUT'])
 def user(request, id):
     if request.method == 'GET':
         user = User.objects.get(pk=id)
         serializer = UserSerializer(user)
         return JsonResponse(serializer.data)
+    elif request.method == 'PUT':
+        user = User.objects.get(pk=id)
+        if request.data.get('newUsername') == '':
+            user.profile_pic = request.data.get('newProfilePic')
+        elif request.data.get('newProfilePic') == 'null':
+            user.username = request.data.get('newUsername')
+        else: 
+            user.profile_pic = request.data.get('newProfilePic')
+            user.username = request.data.get('newUsername')
+        user.save()
+        return JsonResponse({'message': 'profile updated!', 'username': user.username})
+        
 
 @api_view(['GET', 'PUT'])
 def profile(request, username):
